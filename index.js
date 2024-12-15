@@ -4,7 +4,10 @@ const app = express();
 // Middleware to parse JSON request bodies
 app.use(express.json());
 const fileuploader = require('express-fileupload');
-app.use(fileuploader());
+app.use(fileuploader({
+  useTempFiles:true,
+  tempFileDir:'/tmp/'
+}));
 
 require('dotenv').config();
 const port = process.env.PORT || 4000;
