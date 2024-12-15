@@ -46,10 +46,14 @@ function isSupportedFileType(type,supporedType){
     return supporedType.includes(type);
 }
 
-async function uploadToCloudinary(file,folder){
+async function uploadToCloudinary(file,folder,quality){
     const options ={folder};
     // console.log(file);
     // console.log(options);
+    if(quality){ // this line help to set the qualit of image upload
+        options.quality = quality;
+    }
+    options.resource_type = "auto"; // if you upoad the video file thats way use type auto
     return await cloudinary.uploader.upload(file.tempFilePath, options);
 }
 exports.imageUpload = async(req,res)=>{
@@ -89,6 +93,94 @@ exports.imageUpload = async(req,res)=>{
     }
     catch(err){
         console.error(err);
-        res.status(500).json({message: 'kuch to garbar hai'});
+        res.status(500).json({message: 'image upload to garbar hai'});
+    }
+}
+
+
+// video upload function
+exports.videoUpload = async(req,res)=>{
+    try{
+          //fetch the data in request
+          const {name,tag,email} = req.body;
+          console.log(name,tag,email);
+
+          const file = req.files.file;
+          console.log("file: ",file);
+          
+          // validation suppored file type
+          const supporedFileType = ["mp4","mov"];
+          const myFileType = file.name.split('.')[1].toLowerCase();
+          console.log(myFileType);
+  
+          if(!isSupportedFileType(myFileType,supporedFileType)){
+              return res.status(400).json({message: 'Invalid file type'});
+          }
+  
+          //if file is supported
+          const response = await uploadToCloudinary(file,"myCloudData");
+          console.log(response,"video uploaded successfully");
+  
+          //db me entry create karo
+          const newFile = await File.create({
+              name,
+              tag,
+              email,
+              imageURL: response.secure_url
+          });
+  
+          res.json({
+              success: true,
+              message: 'video uploaded successfully',
+              file: newFile
+          })
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({message: 'video upload to garbar hai'});
+    }
+}
+
+
+// image quality reducer
+exports.imageUploadQuality = async (req,res) =>{
+    try{
+        //fetch the data in request body
+        const {name,tag, email} = req.body;
+        console.log(name,tag,email);
+
+        const file = req.files.file;
+        console.log("file: ",file);
+        
+        // validation suppored file type
+        const supporedFileType = ["jpg", "png", "jpeg"];
+        const myFileType = file.name.split('.')[1].toLowerCase();
+        console.log(myFileType);
+
+        if(!isSupportedFileType(myFileType,supporedFileType)){
+            return res.status(400).json({message: 'Invalid file type'});
+        }
+        // if file type is supported then upload the file to cloudinary
+        const response = await uploadToCloudinary(file,"myCloudData",3);
+        console.log(response,"file uploaded successfully");
+        
+        //db me entry create karo
+        const newFile = await File.create({
+            name,
+            tag,
+            email,
+            imageURL: response.secure_url
+        });
+
+        res.json({
+            success: true,
+            message: 'Image quility reduce uploaded successfully',
+            file: newFile
+        })
+
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({message: 'image quality reduction to garbar hai'});
     }
 }
